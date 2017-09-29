@@ -1,0 +1,58 @@
+#!/bin/bash
+#
+# Display information about a Google Cloud Dataflow job.
+
+usage() {
+  echo -e "Usage: $0 JOB_ID [-p PROJECT_ID] [-f]\n"
+  echo -e '\t-p, --project\tSet the google cloud project id for the job. Defaults to active gcloud configuration.'
+  echo -e '\t-f, --full\tPrint a full, detailed job description'
+}
+
+error() {
+  echo "Error: $@" >&2
+}
+
+job_desc() {
+  gcloud dataflow jobs describe $@
+}
+
+main() {
+  while [ "$#" -gt 0 ] ; do
+    case "$1" in
+      -f | --full) full='--full' ;;
+      -p | --project) 
+        shift
+        project="--project=$1" 
+        ;;
+      -h | --help)
+        usage
+        exit
+        ;;
+      -*) 
+        error "invalid argument $1"
+        usage 
+        exit 1 
+        ;;
+      *)
+        if [ -z "${job_id+x}" ] ; then
+          job_id="$1"
+        else
+          error 'too many arguments.'
+          usage
+          exit 1
+        fi
+        ;;
+    esac
+    shift
+  done
+
+  if [ -z "${job_id+x}" ] ; then
+    error 'no job id specified.'
+    usage
+    exit 1
+  fi
+
+  job_desc "${job_id}" "${full}" "${project}"
+}
+
+main "$@"
